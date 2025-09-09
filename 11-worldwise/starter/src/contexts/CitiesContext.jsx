@@ -1,9 +1,9 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useReducer,
-  useState,
 } from "react";
 
 const BASE_URL = "http://localhost:9000";
@@ -88,24 +88,33 @@ function CitiesProvider({ children }) {
     fetchCities();
   }, []);
 
-  async function getCity(id) {
-    if (id === currentCity.id) {
-      return;
-    }
+  const getCity = useCallback(
+    async function getCity(id) {
+      // The lecture was wrong at this point. The lecture was "Number(id) === currentCity.id"
+      // This can never be true as currentCity.id is a string
 
-    dispatch({ type: "loading" });
+      // However, at later chapter of the course, this wrong check was to used
+      // created an infinite loop which was solved by useCallback()
 
-    try {
-      const res = await fetch(`${BASE_URL}/cities/${id}`);
-      const data = await res.json();
-      dispatch({ type: "city/loaded", payload: data });
-    } catch {
-      dispatch({
-        type: "rejected",
-        payload: "There was an error loading the city.",
-      });
-    }
-  }
+      if (id === currentCity.id) {
+        return;
+      }
+
+      dispatch({ type: "loading" });
+
+      try {
+        const res = await fetch(`${BASE_URL}/cities/${id}`);
+        const data = await res.json();
+        dispatch({ type: "city/loaded", payload: data });
+      } catch {
+        dispatch({
+          type: "rejected",
+          payload: "There was an error loading the city.",
+        });
+      }
+    },
+    [currentCity.id],
+  );
 
   async function createCity(newCity) {
     dispatch({ type: "loading" });
